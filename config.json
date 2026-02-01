@@ -1,0 +1,9 @@
+{
+  "enabled": true,
+  "target_lang": "en",
+  "ui_lang": "ru",
+  "romaji": true,
+  "theme": "dark",
+  "hotkey": "Ctrl+Alt+Shift+Q",
+  "autostart": false
+}

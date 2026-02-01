@@ -1,0 +1,62 @@
+QWidget {
+    background-color: #120b1e;
+    color: #f1eaff;
+    font-family: "Segoe UI", "Arial";
+    font-size: 13px;
+}
+
+QFrame#Sidebar {
+    background-color: #0a0512;
+    border-right: 1px solid #2d1b4d;
+}
+
+QPushButton#NavBtn {
+    background: #1a0f2e;
+    border: 1px solid #4a2d82;
+    color: #b39ddb;
+    padding: 10px;
+    margin: 6px 12px;
+    border-radius: 8px;
+}
+
+QPushButton#NavBtn:hover {
+    background: #2d1b4d;
+    border: 1px solid #ea80fc;
+    color: #ffffff;
+}
+
+QPushButton#NavBtn:checked {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #9c27b0, stop:1 #6a4bff);
+    color: white;
+    border: 1px solid #ea80fc;
+}
+
+QPushButton#AccentBtn {
+    background: #4a148c;
+    border: 1px solid #ea80fc;
+    color: white;
+    border-radius: 10px;
+}
+
+QPushButton#AccentBtn:hover {
+    background: #6a1b9a;
+    border: 1px solid #ffffff;
+}
+
+/* Добавим стиль для истории в фиолетовой теме */
+QFrame {
+    border: 1px solid #2d1b4d;
+    background: #1a0f2e;
+}
+QLabel { color: #f1eaff; }
+QScrollArea { background: transparent; }
+QFrame#HistoryItem { background: #1a0f2e; border: 1px solid #4a2d82; }
+QDialog { background-color: #120b1e; }
+/* Добавь это в light.qss */
+QPushButton#AccentBtn {
+    background-color: #0071e3;
+    color: #ffffff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+}

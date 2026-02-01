@@ -1,0 +1,22 @@
+QWidget {
+    background-color: #0f0f14;
+    color: #e6e6ff;
+    font-family: "Segoe UI", "Arial";
+    font-size: 13px;
+}
+QFrame#Sidebar { background-color: #0b0b10; border-right: 1px solid #1a1a24; }
+QPushButton#NavBtn {
+    background: #0b0b10; border: 1px solid #333; color: #bbb;
+    padding: 10px; margin: 6px 12px; border-radius: 8px;
+}
+QPushButton#NavBtn:hover { background: #1a1a24; color: white; }
+QPushButton#NavBtn:checked { background: #6a4bff; color: white; border: 1px solid #6a4bff; }
+QPushButton#AccentBtn { background: #1a1a24; border: 1px solid #6a4bff; color: white; border-radius: 10px; }
+/* Добавь это в light.qss */
+QPushButton#AccentBtn {
+    background-color: #0071e3;
+    color: #ffffff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+}

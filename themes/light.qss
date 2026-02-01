@@ -1,0 +1,60 @@
+/* Основное окно и фоны */
+QWidget {
+    background-color: #f5f5f7;
+    color: #1d1d1f;
+    font-family: "Segoe UI", "Arial";
+    font-size: 13px;
+}
+
+/* Боковая панель (белая с тонкой серой полоской) */
+QFrame#Sidebar {
+    background-color: #ffffff;
+    border-right: 1px solid #d2d2d7;
+}
+
+/* Обычные кнопки навигации (Status, History, Settings) */
+QPushButton#NavBtn {
+    background: transparent;
+    color: #424245;
+    padding: 10px;
+    margin: 4px 10px;
+    border-radius: 8px;
+    text-align: left;
+    font-weight: 500;
+}
+
+QPushButton#NavBtn:hover {
+    background: #f5f5f7;
+    color: #0071e3;
+}
+
+/* Активная кнопка в меню (выделена синим) */
+QPushButton#NavBtn:checked {
+    background: #0071e3;
+    color: #ffffff;
+}
+
+/* ВАЖНЫЕ КНОПКИ (Guide, About, Настройки) */
+QPushButton#AccentBtn {
+    background-color: #0071e3;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    padding: 8px;
+}
+
+QPushButton#AccentBtn:hover {
+    background-color: #005bb7;
+}
+
+/* Скроллбар (тонкий и серый) */
+QScrollBar:vertical {
+    border: none;
+    background: transparent;
+    width: 6px;
+}
+QScrollBar::handle:vertical {
+    background: #d2d2d7;
+    border-radius: 3px;
+}
