@@ -1,0 +1,106 @@
+/* --- ГЛОБАЛЬНЫЕ СТИЛИ --- */
+QWidget {
+    background-color: #0f0d16;
+    color: #e6e6f0;
+    font-family: "Segoe UI";
+    font-size: 14px;
+}
+
+/* --- САЙДБАР --- */
+QFrame#Sidebar {
+    background-color: #171429;
+    border-right: 1px solid #24203a;
+}
+
+QLabel#Logo {
+    font-size: 22px;
+    font-weight: 900;
+    color: #6a4bff;
+    padding: 25px 10px;
+}
+
+/* Кнопки навигации */
+QPushButton#NavBtn {
+    text-align: left;
+    padding: 15px 20px;
+    background-color: transparent;
+    border: none;
+    color: #8e8db3;
+    font-weight: 600;
+}
+
+QPushButton#NavBtn:hover {
+    background-color: #1e1b29;
+    color: white;
+}
+
+QPushButton#NavBtn:checked {
+    background-color: #24203a;
+    color: #6a4bff;
+    border-left: 4px solid #6a4bff;
+}
+
+/* --- ОКНО POPUP --- */
+#popupFrame {
+    background-color: #1e1b29;
+    border: 2px solid #6a4bff;
+    border-radius: 14px;
+}
+
+QPushButton#CloseBtn {
+    background: transparent;
+    color: #8e8db3;
+    font-size: 16px;
+    border: none;
+    border-top-right-radius: 12px;
+}
+
+QPushButton#CloseBtn:hover {
+    background-color: #e81123;
+    color: white;
+}
+
+/* --- КАРТОЧКИ ИСТОРИИ --- */
+QFrame#HistoryCard {
+    background-color: #171429;
+    border: 1px solid #24203a;
+    border-radius: 12px;
+}
+
+QLabel#CardTitle {
+    color: #6a4bff;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+/* Кнопка Акцента (COPY) */
+QPushButton#Accent {
+    background-color: #6a4bff;
+    color: white;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 5px;
+}
+
+QPushButton#Accent:hover { background-color: #7d62ff; }
+
+/* Скроллбар */
+QScrollBar:vertical {
+    border: none; background: #0f0d16; width: 8px;
+}
+QScrollBar::handle:vertical {
+    background: #24203a; border-radius: 4px;
+}
+
+QPushButton#PopupCopyBtn {
+    background: #24203a;
+    color: #8e8db3;
+    font-size: 11px;
+    border: 1px solid #3a355a;
+    border-radius: 4px;
+}
+
+QPushButton#PopupCopyBtn:hover {
+    background: #6a4bff;
+    color: white;
+}

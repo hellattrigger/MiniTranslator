@@ -850,13 +850,18 @@ class MiniTranslatorApp(QWidget):
         from config import tr
         t = lambda key: tr(self.cfg, key)
 
+        # Перевод кнопок бокового меню
         self.btn_status.setText(t("status"))
         self.btn_history.setText(t("history"))
         self.btn_settings.setText(t("settings"))
         self.btn_hide.setText(t("hide_tray"))
         
-        theme = self.cfg.get("theme", "dark")
+        # Вызов обновления текстов в панели настроек (твои чекбоксы и комбобоксы)
+        if hasattr(self, "page_settings"):
+            self.page_settings.retranslate(self.cfg)
         
+        # Определение цвета акцента для текста статуса
+        theme = self.cfg.get("theme", "dark")
         if theme == "light":
             accent = "#0071e3"
         elif theme == "purple":
@@ -864,9 +869,9 @@ class MiniTranslatorApp(QWidget):
         else:
             accent = "#6a4bff"
             
+        # Обновление текста на главном экране (READY / PRESS KEY)
         hotkey = self.cfg.get("hotkey", "Ctrl+Alt+Q")
         ready_text = t("ready").upper()
-
         press_text = t("press_key").format(hotkey)
         
         self.status_label.setText(
@@ -876,6 +881,7 @@ class MiniTranslatorApp(QWidget):
             f"</div>"
         )
 
+        # Обновление страницы истории
         if hasattr(self, "page_history"):
             self.page_history.render_history(self.state.history, self.cfg)
 
