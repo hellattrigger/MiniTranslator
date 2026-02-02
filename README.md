@@ -11,6 +11,10 @@ MiniTranslator
 	Multilingual: Switch both the interface language and the translation direction.
 
 	Themes: Choose from 3 different visual themes.
+<img width="898" height="629" alt="Image" src="https://github.com/user-attachments/assets/635a4381-da18-40ae-822d-4b1e90c7502b" />
+<img width="902" height="629" alt="Image" src="https://github.com/user-attachments/assets/d5badca7-e10e-4906-96b0-b89464aaa35b" />
+<img width="961" height="397" alt="Image" src="https://github.com/user-attachments/assets/9be32374-2ae4-4906-bf5b-03a84f62b4fd" />
+<img width="900" height="627" alt="Image" src="https://github.com/user-attachments/assets/3b8728b7-2cb7-4b10-8eb7-d51bc89b6e81" />
  Installation
 
  For Users
