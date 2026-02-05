@@ -19,8 +19,8 @@ A simple, lightweight desktop translator built with Python and PySide6. Fast, ea
 
 ### For Users
 1. Go to the [Releases](https://github.com/hellattrigger/MiniTranslator/releases) page.
-2. Download `MiniTranslator.exe`.
-3. Run it.
+2. Download `MiniTranslator_v1.1.zip`.
+3. Run MiniTranslator.exe.
 
 ### For Developers
 1. Clone the repository:
