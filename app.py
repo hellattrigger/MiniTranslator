@@ -17,6 +17,13 @@ import config
 import autostart
 from state import AppState 
 from settings_panel import SettingsPanel 
+import os
+import sys
+
+if getattr(sys, 'frozen', False):
+    os.chdir(os.path.dirname(sys.executable))
+else:
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
 
@@ -29,9 +36,9 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-ICON_PNG = resource_path("icon.png")
-ICON_ICO = resource_path("icon.ico")
-ABOUT_IMG = resource_path("about.png")
+ICON_PNG = resource_path(os.path.join("assets", "icon.png"))
+ICON_ICO = resource_path(os.path.join("assets", "icon.ico"))
+ABOUT_IMG = resource_path(os.path.join("assets", "about.png"))
 
 
 def load_stylesheet(theme_name):
@@ -139,31 +146,17 @@ class TranslatePopup(QDialog):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.close_btn.move(self.width() - 32, 8)
-        # main tx
-        self.res_lbl = QLabel(translated)
-        self.res_lbl.setWordWrap(True)
-        self.res_lbl.setStyleSheet(
-            "font-size: 16px; font-weight: 600; color: #00ffcc;"
-        )
-        self.main_layout.addWidget(self.res_lbl)
 
-        # romanj
-        if extra:
-            self.ex_lbl = QLabel(extra)
-            self.ex_lbl.setWordWrap(True)
-            self.ex_lbl.setStyleSheet(
-                "color: #9fa3ff; font-style: italic;"
-            )
-            self.main_layout.addWidget(self.ex_lbl)
-
-        self.adjustSize()
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.close_btn.move(self.width() - 32, 8)
 
 
 #histor
+
+from datetime import datetime
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+    QPushButton, QScrollArea, QFrame, QApplication
+)
+from PySide6.QtCore import Qt, Signal
 
 class HistoryPage(QWidget):
     delete_requested = Signal(int)
@@ -171,44 +164,44 @@ class HistoryPage(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-
         self.layout = QVBoxLayout(self)
 
-        header_row = QHBoxLayout()
-        self.title_label = QLabel("HISTORY")
-        self.title_label.setStyleSheet(
-            "color: #444; font-weight: bold; letter-spacing: 1px;"
+        #warning
+        self.warning_box = QFrame()
+        self.warning_box.setObjectName("SmartWarning")
+        self.warning_box.setFixedHeight(55)
+        self.warning_box.setGraphicsEffect(QGraphicsOpacityEffect())
+
+        warn_l = QHBoxLayout(self.warning_box)
+        self.warn_text = QLabel("")
+        self.warn_clear_btn = QPushButton("ОЧИСТИТЬ")
+        self.warn_clear_btn.setCursor(Qt.PointingHandCursor)
+        self.warn_clear_btn.clicked.connect(
+            lambda: self.clear_all_requested.emit()
         )
 
+        warn_l.addWidget(QLabel("⚠️"))
+        warn_l.addWidget(self.warn_text)
+        warn_l.addStretch()
+        warn_l.addWidget(self.warn_clear_btn)
+
+        self.layout.addWidget(self.warning_box)
+        self.warning_box.hide()
+
+        header = QHBoxLayout()
+        self.title_label = QLabel("HISTORY")
         self.clear_all_btn = QPushButton("CLEAR ALL")
-        self.clear_all_btn.setFixedWidth(120)
-        self.clear_all_btn.setCursor(Qt.PointingHandCursor)
-        self.clear_all_btn.setStyleSheet("""
-            QPushButton { 
-                background: transparent; 
-                color: #ff5555; 
-                border: 1px solid #442222; 
-                border-radius: 4px; 
-                font-size: 10px; 
-                font-weight: bold; 
-                padding: 4px;
-            }
-            QPushButton:hover { background: #331111; }
-        """)
         self.clear_all_btn.clicked.connect(
             lambda: self.clear_all_requested.emit()
         )
 
-        header_row.addWidget(self.title_label)
-        header_row.addStretch()
-        header_row.addWidget(self.clear_all_btn)
-        self.layout.addLayout(header_row)
+        header.addWidget(self.title_label)
+        header.addStretch()
+        header.addWidget(self.clear_all_btn)
+        self.layout.addLayout(header)
 
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet(
-            "QScrollArea { border: none; background: transparent; }"
-        )
 
         self.container = QWidget()
         self.container_layout = QVBoxLayout(self.container)
@@ -217,186 +210,136 @@ class HistoryPage(QWidget):
         self.scroll.setWidget(self.container)
         self.layout.addWidget(self.scroll)
 
-    def clear_layout(self):
-        while self.container_layout.count():
-            item = self.container_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
     def render_history(self, history_data, cfg=None):
         from config import tr
         t = lambda key: tr(cfg, key) if cfg else key
 
-        self.clear_layout()
+        while self.container_layout.count():
+            item = self.container_layout.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
 
         theme = cfg.get("theme", "dark") if cfg else "dark"
-        accent_color = (
-            "#0071e3" if theme == "light"
-            else "#9c27b0" if theme == "purple"
-            else "#6a4bff"
-        )
-
-        if not history_data:
-            empty = QLabel(t("history_empty"))
-            empty_color = "#86868b" if theme == "light" else "#444"
-            empty.setStyleSheet(
-                f"color: {empty_color}; margin-top: 40px; font-size: 14px;"
-            )
-            empty.setAlignment(Qt.AlignCenter)
-            self.container_layout.addWidget(empty)
-            return
-
-        last_date = ""
-        for i, item in enumerate(history_data):
-            curr_date = item.get("date", "")
-
-            if curr_date != last_date:
-                header = QLabel(self._format_date(curr_date, cfg))
-                header.setStyleSheet(f"""
-                    color: {accent_color}; 
-                    font-weight: bold; 
-                    margin-top: 15px; 
-                    font-size: 11px; 
-                    margin-left: 5px; 
-                    text-transform: uppercase;
-                """)
-                self.container_layout.addWidget(header)
-                last_date = curr_date
-
-            self._add_card_to_layout(
-                i,
-                item["src"],
-                item["dst"],
-                item.get("extra", ""),
-                cfg
-            )
-
-    def _format_date(self, date_str, cfg=None):
-        from config import tr
-        today = datetime.now().strftime("%Y-%m-%d")
-        if date_str == today:
-            return tr(cfg, "ready").upper() if cfg else "TODAY"
-        return date_str
-
-    def _add_card_to_layout(self, index, src, dst, extra, cfg):
-        theme = cfg.get("theme", "dark") if cfg else "dark"
-        from config import tr
-        t = lambda key: tr(cfg, key) if cfg else key
-
+        
+        # palitr
         if theme == "light":
-            bg, border, text_main, text_src = (
-                "#ffffff", "#d2d2d7", "#1d1d1f", "#86868b"
-            )
-            copy_style = (
-                "background: #e1e1e1; color: #1d1d1f; "
-                "border: 1px solid #d2d2d7;"
-            )
-            del_style = (
-                "background: #ffe5e5; color: #d32f2f; "
-                "border: 1px solid #ffcdd2;"
-            )
-            del_hover = "background: #ffcdd2;"
-
+            src_c, dst_c = "#555", "#0071e3"
+            accent = "#0071e3"   
+            danger = "#ff3b30"   
+            card_bg = "#f5f5f7"
         elif theme == "purple":
-            
-            bg, border, text_main, text_src = (
-                "#ffffff", "#ff85c0", "#4a3a63", "#9b86bd"
-            )
-            copy_style = (
-                f"background: #f4ebff; color: #ff85c0; "
-                f"border: 1px solid #ff85c0;"
-            )
-            del_style = (
-                "background: #fff0f6; color: #ff4d4f; "
-                "border: 1px solid #ffccc7;"
-            )
-            del_hover = "background: #ff4d4f; color: white;"
+            src_c, dst_c = "#9b86bd", "#d4448c"
+            accent = "#d4448c"  
+            danger = "#ff85c0"  
+            card_bg = "#f4ebff"
+        else: # Dark
+            src_c, dst_c = "#ccc", "#00ffcc"
+            accent = "#6a4bff"  
+            danger = "#ff5555"   
+            card_bg = "#1a1a24"
 
-        else:
-            bg, border, text_main, text_src = (
-                "#0f0f14", "#1a1a24", "#00ffcc", "#666"
-            )
-            copy_style = (
-                "background: #1a1a24; color: #bbb; "
-                "border: 1px solid #333;"
-            )
-            del_style = (
-                "background: #2d1616; color: #ff5555; "
-                "border: 1px solid #442222;"
-            )
-            del_hover = "background: #441111; color: white;"
-
-        card = QFrame()
-        card.setObjectName("HistoryItem")
-        card.setStyleSheet(
-            f"QFrame#HistoryItem {{ "
-            f"background-color: {bg}; "
-            f"border: 1px solid {border}; "
-            f"border-radius: 10px; }}"
-        )
-
-        layout = QVBoxLayout(card)
-        layout.setContentsMargins(12, 12, 12, 12)
-        layout.setSpacing(8)
-
-        src_lbl = QLabel(src)
-        src_lbl.setStyleSheet(
-            f"color: {text_src}; font-size: 12px;"
-        )
-        src_lbl.setWordWrap(True)
-        layout.addWidget(src_lbl)
-
-        line = QFrame()
-        line.setFixedHeight(1)
-        line.setStyleSheet(
-            f"background-color: {border}; border: none;"
-        )
-        layout.addWidget(line)
-
-        dst_lbl = QLabel(dst)
-        dst_lbl.setStyleSheet(
-            f"color: {text_main}; font-size: 15px; font-weight: bold;"
-        )
-        dst_lbl.setWordWrap(True)
-        layout.addWidget(dst_lbl)
-
-        btn_layout = QHBoxLayout()
-        btn_layout.setSpacing(10)
-
-        btn_font_style = (
-            "font-size: 11px; font-weight: 500; border-radius: 6px;"
-        )
-
-        copy_btn = QPushButton(t("copy"))
-        copy_btn.setFixedSize(85, 28)
-        copy_btn.setCursor(Qt.PointingHandCursor)
-        copy_btn.setStyleSheet(
-            f"QPushButton {{ {copy_style} {btn_font_style} }}"
-        )
-        copy_btn.clicked.connect(
-            lambda ch, text=dst: QApplication.clipboard().setText(text)
-        )
-
-        del_btn = QPushButton(t("delete"))
-        del_btn.setFixedSize(85, 28)
-        del_btn.setCursor(Qt.PointingHandCursor)
-        del_btn.setStyleSheet(f"""
-            QPushButton {{ {del_style} {btn_font_style} }}
-            QPushButton:hover {{ {del_hover} }}
+        # clear all new
+        self.clear_all_btn.setText(t("clear_all").upper())
+        self.clear_all_btn.setStyleSheet(f"""
+            QPushButton {{
+                color: {danger}; border: 1px solid {danger}; 
+                border-radius: 4px; padding: 4px 8px; font-weight: bold; background: transparent;
+            }}
+            QPushButton:hover {{ background: {danger}; color: white; }}
         """)
-        del_btn.clicked.connect(
-            lambda ch, idx=index: self.delete_requested.emit(idx)
-        )
 
-        btn_layout.addStretch()
-        btn_layout.addWidget(copy_btn)
-        btn_layout.addWidget(del_btn)
-        layout.addLayout(btn_layout)
+# 4. waring panel thm
+        if theme == "light":
 
-        self.container_layout.addWidget(card)
+            w_bg, w_brd, w_txt = "rgba(0, 113, 227, 15)", "rgba(0, 113, 227, 60)", "#0071e3"
+        elif theme == "purple":
 
+            w_bg, w_brd, w_txt = "rgba(212, 68, 140, 15)", "rgba(212, 68, 140, 60)", "#d4448c"
+        else:
 
-#main wind.
+            w_bg, w_brd, w_txt = "rgba(255, 85, 85, 12)", "rgba(255, 85, 85, 50)", "#ff9999"
+
+        if len(history_data) > 50:
+            self.warning_box.show()
+            self.warn_text.setText(t("history_too_long"))
+
+            self.warning_box.setStyleSheet(f"""
+                QFrame#SmartWarning {{
+                    background-color: {w_bg};
+                    border: 1px solid {w_brd};
+                    border-radius: 12px;
+                }}
+                QLabel {{
+                    color: {w_txt};
+                    font-size: 13px;
+                    font-weight: 500;
+                    background: transparent;
+                    border: none;
+                }}
+            """)
+
+            self.warn_clear_btn.setText(t("clear_all").upper())
+            self.warn_clear_btn.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {w_txt};
+                    color: white;
+                    border-radius: 7px;
+                    padding: 4px 14px;
+                    font-weight: bold;
+                    font-size: 11px;
+                    border: none;
+                }}
+                QPushButton:hover {{
+                    background-color: {w_brd}; /* Эффект затухания при наведении */
+                }}
+            """)
+        else:
+            self.warning_box.hide()
+
+        for i, item in enumerate(history_data):
+            card = QFrame()
+            card.setStyleSheet(f"background-color: {card_bg}; border-radius: 10px; margin-bottom: 5px;")
+            card_layout = QVBoxLayout(card)
+            
+            src_lbl = QLabel(item["src"])
+            src_lbl.setWordWrap(True)
+            src_lbl.setStyleSheet(f"color: {src_c}; font-size: 14px; background: transparent; border: none;")
+            
+            dst_lbl = QLabel(item["dst"])
+            dst_lbl.setWordWrap(True)
+            dst_lbl.setStyleSheet(f"color: {dst_c}; font-weight: bold; font-size: 15px; background: transparent; border: none;")
+            
+            card_layout.addWidget(src_lbl)
+            card_layout.addWidget(dst_lbl)
+
+            btns_row = QHBoxLayout()
+            btns_row.addStretch()
+
+            copy_btn = QPushButton(t("copy") if cfg else "КОПИРОВАТЬ")
+            copy_btn.setCursor(Qt.PointingHandCursor)
+            copy_btn.setStyleSheet(f"""
+                QPushButton {{
+                    color: {accent}; border: 1px solid {accent}; border-radius: 5px; padding: 4px 10px; background: transparent;
+                }}
+                QPushButton:hover {{ background: {accent}; color: white; }}
+            """)
+            copy_btn.clicked.connect(lambda ch, text=item["dst"]: QApplication.clipboard().setText(text))
+
+            del_btn = QPushButton(t("delete") if cfg else "УДАЛИТЬ")
+            del_btn.setCursor(Qt.PointingHandCursor)
+            del_btn.setStyleSheet(f"""
+                QPushButton {{
+                    color: {danger}; border: 1px solid {danger}; border-radius: 5px; padding: 4px 10px; background: transparent;
+                }}
+                QPushButton:hover {{ background: {danger}; color: white; }}
+            """)
+            del_btn.clicked.connect(lambda ch, idx=i: self.delete_requested.emit(idx))
+            
+            btns_row.addWidget(copy_btn)
+            btns_row.addWidget(del_btn)
+            card_layout.addLayout(btns_row)
+            
+            self.container_layout.addWidget(card)
+
 
 class MiniTranslatorApp(QWidget):
     translate_req_signal = Signal(str)
@@ -417,6 +360,9 @@ class MiniTranslatorApp(QWidget):
         self.translate_req_signal.connect(self._process_translation)
         self.show_result_signal.connect(self._on_display_result)
 
+        # hotkei engine
+        core.start_engine(self.on_hotkey, self.cfg.get("hotkey", "Ctrl+Alt+Shift+Q"))
+
         self.apply_all(self.cfg)
 
     def build_ui(self):
@@ -429,9 +375,6 @@ class MiniTranslatorApp(QWidget):
 
         side_layout = QVBoxLayout(sidebar)
         side_layout.setContentsMargins(10, 30, 10, 10)
-        
-
-
 
         self.btn_status = QPushButton()
         self.btn_history = QPushButton()
@@ -446,7 +389,7 @@ class MiniTranslatorApp(QWidget):
 
         side_layout.addStretch()
 
-        self.btn_hide = QPushButton()
+        self.btn_hide = QPushButton("Hide to Tray")
         self.btn_hide.clicked.connect(self.hide)
         side_layout.addWidget(self.btn_hide)
 
@@ -454,7 +397,7 @@ class MiniTranslatorApp(QWidget):
 
         self.pages = QStackedWidget()
 
-        
+        # Statusssssssssss page
         status_page = QWidget()
         status_layout = QVBoxLayout(status_page)
 
@@ -464,50 +407,45 @@ class MiniTranslatorApp(QWidget):
 
         info_btns_layout = QVBoxLayout()
         info_btns_layout.setSpacing(10)
-        
 
-        
         self.about_btn = QPushButton("About")
         self.about_btn.setFixedSize(140, 40)
         self.about_btn.setCursor(Qt.PointingHandCursor)
         self.about_btn.clicked.connect(self.show_about_panel)
         self.about_btn.setObjectName("AccentBtn")
 
-        
         self.guide_btn = QPushButton("Guide")
         self.guide_btn.setFixedSize(100, 30)
         self.guide_btn.setCursor(Qt.PointingHandCursor)
         self.guide_btn.clicked.connect(self.show_guide)
         self.guide_btn.setObjectName("AccentBtn")
 
-        info_btns_layout.addWidget(
-            self.about_btn, alignment=Qt.AlignCenter
-        )
-        info_btns_layout.addWidget(
-            self.guide_btn, alignment=Qt.AlignCenter
-        )
+        info_btns_layout.addWidget(self.about_btn, alignment=Qt.AlignCenter)
+        info_btns_layout.addWidget(self.guide_btn, alignment=Qt.AlignCenter)
 
+# (GitHub + Copyright + Privacy
         bottom_row = QHBoxLayout()
+        
+        self.github_link = QLabel()
+        self.github_link.setOpenExternalLinks(True)
+        self.github_link.setCursor(Qt.PointingHandCursor)
+        gh_url = "https://github.com/hellattrigger/MiniTranslator"
+        self.github_link.setText(f'<a href="{gh_url}" style="text-decoration: none; color: #666;">GitHub</a>')
+        self.github_link.setStyleSheet("QLabel { color: #666; font-size: 11px; background: transparent; } QLabel:hover { text-decoration: underline; }")
+
         self.copyright = QLabel("© 2026 • hellattrigger")
-        self.copyright.setStyleSheet("color: #666; font-size: 11px;")
+        self.copyright.setStyleSheet("color: #666; font-size: 11px; background: transparent;")
 
         self.privacy_btn = QPushButton("Privacy & Terms")
         self.privacy_btn.setCursor(Qt.PointingHandCursor)
         self.privacy_btn.clicked.connect(self.show_privacy)
-        self.privacy_btn.setStyleSheet("""
-            QPushButton { 
-                background: transparent; 
-                color: #555; 
-                border: none; 
-                font-size: 11px; 
-                text-decoration: underline; 
-            }
-            QPushButton:hover { color: #6a4bff; }
-        """)
+        self.privacy_btn.setStyleSheet("QPushButton { background: transparent; color: #666; border: none; font-size: 11px; text-decoration: underline; } QPushButton:hover { color: #888; }")
 
         bottom_row.addStretch()
+        bottom_row.addWidget(self.github_link)
+        bottom_row.addSpacing(20)
         bottom_row.addWidget(self.copyright)
-        bottom_row.addSpacing(15)
+        bottom_row.addSpacing(20)
         bottom_row.addWidget(self.privacy_btn)
         bottom_row.addStretch()
 
@@ -518,18 +456,12 @@ class MiniTranslatorApp(QWidget):
         status_layout.addStretch()
         status_layout.addLayout(bottom_row)
 
-        
         self.page_history = HistoryPage()
-        self.page_history.delete_requested.connect(
-            self._delete_history_item
-        )
-        self.page_history.clear_all_requested.connect(
-            self._clear_history
-        )
 
-        self.page_settings = SettingsPanel(
-            self.cfg, self.state.set
-        )
+        self.page_history.delete_requested.connect(self._delete_history_item)
+        self.page_history.clear_all_requested.connect(self._clear_history)
+
+        self.page_settings = SettingsPanel(self.cfg, self.state.set)
 
         self.pages.addWidget(status_page)
         self.pages.addWidget(self.page_history)
@@ -540,8 +472,59 @@ class MiniTranslatorApp(QWidget):
         self.btn_status.clicked.connect(lambda: self.switch_page(0))
         self.btn_history.clicked.connect(lambda: self.switch_page(1))
         self.btn_settings.clicked.connect(lambda: self.switch_page(2))
-        
-        
+
+    # logic
+
+    def switch_page(self, index):
+        self.pages.setCurrentIndex(index)
+        self.btn_status.setChecked(index == 0)
+        self.btn_history.setChecked(index == 1)
+        self.btn_settings.setChecked(index == 2)
+        if index == 1:
+            self.page_history.render_history(self.state.history, self.cfg)
+
+    def on_hotkey(self, text):
+        if text: self.translate_req_signal.emit(text)
+
+    def _process_translation(self, text):
+        def worker():
+            try:
+                dst = core.translate_text(text, self.cfg.get("target_lang", "ru"))
+                extra = core.japanese_to_romaji(text) if (self.cfg.get("romaji") and core.is_japanese(text)) else ""
+                self.show_result_signal.emit(text, dst, extra)
+            except: pass
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_display_result(self, src, dst, extra):
+        from app import TranslatePopup 
+        self.popup = TranslatePopup(dst, extra, self.cfg.get("theme", "dark"), self)
+        self.popup.show()
+        self.state.add_history_item(src, dst, extra)
+
+    def apply_all(self, cfg):
+        self.cfg = cfg
+
+        from app import load_stylesheet
+        self.setStyleSheet(load_stylesheet(cfg.get("theme", "dark")))
+
+        from config import tr
+        t = lambda key: tr(self.cfg, key)
+        self.btn_status.setText(t("status"))
+        self.btn_history.setText(t("history"))
+        self.btn_settings.setText(t("settings"))
+        self.status_label.setText(f"<h1>{t('ready')}</h1><p>{t('press_key').format(self.cfg.get('hotkey', ''))}</p>")
+
+    def _delete_history_item(self, index):
+        self.state.delete_history_item(index)
+        self.page_history.render_history(self.state.history, self.cfg)
+
+    def _clear_history(self):
+        self.state.clear_all_history()
+        self.page_history.render_history([], self.cfg)
+
+    def show_about_panel(self): pass
+    def show_guide(self): pass
+    def show_privacy(self): pass
 
     #guide
     def show_guide(self):
@@ -789,7 +772,7 @@ class MiniTranslatorApp(QWidget):
             self.state.history, self.cfg
         )
 
-    # ------------------ CORE ------------------
+    # CORE
     def force_restart_app(self):
         os.execl(sys.executable, sys.executable, *sys.argv)
 
@@ -850,17 +833,14 @@ class MiniTranslatorApp(QWidget):
         from config import tr
         t = lambda key: tr(self.cfg, key)
 
-        # Перевод кнопок бокового меню
         self.btn_status.setText(t("status"))
         self.btn_history.setText(t("history"))
         self.btn_settings.setText(t("settings"))
         self.btn_hide.setText(t("hide_tray"))
-        
-        # Вызов обновления текстов в панели настроек (твои чекбоксы и комбобоксы)
+
         if hasattr(self, "page_settings"):
             self.page_settings.retranslate(self.cfg)
-        
-        # Определение цвета акцента для текста статуса
+
         theme = self.cfg.get("theme", "dark")
         if theme == "light":
             accent = "#0071e3"
@@ -869,7 +849,7 @@ class MiniTranslatorApp(QWidget):
         else:
             accent = "#6a4bff"
             
-        # Обновление текста на главном экране (READY / PRESS KEY)
+        #(READY / PRESS KEY)
         hotkey = self.cfg.get("hotkey", "Ctrl+Alt+Q")
         ready_text = t("ready").upper()
         press_text = t("press_key").format(hotkey)
@@ -881,7 +861,6 @@ class MiniTranslatorApp(QWidget):
             f"</div>"
         )
 
-        # Обновление страницы истории
         if hasattr(self, "page_history"):
             self.page_history.render_history(self.state.history, self.cfg)
 

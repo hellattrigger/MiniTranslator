@@ -38,7 +38,7 @@ def translate_text(text, target="ru"):
         r = requests.get(
             "https://translate.googleapis.com/translate_a/single",
             params={"client": "gtx", "sl": "auto", "tl": target, "dt": "t", "q": text},
-            timeout=5
+            timeout=2
         )
         r.raise_for_status()
         return "".join(i[0] for i in r.json()[0] if i[0])
@@ -62,7 +62,7 @@ def get_selected_text():
     user32.keybd_event(0x43, 0, 2, 0) 
     user32.keybd_event(0x11, 0, 2, 0) 
 
-    time.sleep(0.2)
+    time.sleep(0.08)
     selected_text = pyperclip.paste()
 
     pyperclip.copy(old_clipboard)

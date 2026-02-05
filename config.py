@@ -1,5 +1,14 @@
 import json
 import os
+import os
+import sys
+
+def get_base_path():
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+BASE_DIR = get_base_path()
 
 CONFIG_FILE = "config.json"
 
@@ -16,6 +25,7 @@ DEFAULT_CONFIG = {
 TRANSLATIONS = {
     "en": {
         "status": "Status", "history": "History", "settings": "Settings",
+        "history_too_long": "History is overloaded. If the app feels slow, try clearing it.",
         "hide_tray": "Minimize to tray", "target_language": "Target language",
         "ui_language": "Interface language", "theme": "Theme",
         "show_romaji": "Show romaji", "hotkey": "Global hotkey",
@@ -35,6 +45,7 @@ TRANSLATIONS = {
     },
     "ru": {
         "status": "Статус", "history": "История", "settings": "Настройки",
+        "history_too_long": "История перегружена. Если приложение подтормаживает — очистите её.",
         "hide_tray": "Свернуть в трей", "target_language": "Язык перевода",
         "ui_language": "Язык интерфейса", "theme": "Тема",
         "support_desc": "Если переводчик вам помогает, вы можете поддержать разработчика небольшим донатом.",
@@ -54,6 +65,7 @@ TRANSLATIONS = {
     },
     "uk": {
         "status": "Статус", "history": "Історія", "settings": "Налаштування",
+        "history_too_long": "Історія перевантажена. Якщо додаток працює повільно — очистіть її.",
         "hide_tray": "Згорнути в трей", "target_language": "Мова перекладу",
         "ui_language": "Мова інтерфейсу", "theme": "Тема",
         "show_romaji": "Показувати ромадзі", "hotkey": "Гаряча клавіша",
@@ -73,6 +85,7 @@ TRANSLATIONS = {
     },
     "ja": {
         "status": "ステータス", "history": "履歴", "settings": "設定",
+        "history_too_long": "履歴が多すぎます。動作が重い場合は削除してください。",
         "hide_tray": "トレイに最小化", "target_language": "翻訳言語",
         "ui_language": "表示言語", "theme": "テーマ",
         "show_romaji": "ローマ字表示", "hotkey": "ショートカットキー",
@@ -91,16 +104,26 @@ TRANSLATIONS = {
         "privacy_full": "<h2>プライバシーポリシー</h2><p>Mini Translatorは<b>完全に無料</b>の非営利アプリです。このプログラムにお金を支払った場合、あなたは詐欺に遭った可能性があります。</p><p><b>1. データ:</b> 設定と翻訳履歴はすべてデバイスにローカルに保存されます。開発者がデータを収集、販売、または第三者に譲渡することはありません。</p><p><b>2. 翻訳:</b> 翻訳するテキストは翻訳処理のみに使用され、開発者によって保存されることはありません。</p><p><b>3. 免責事項:</b> アプリは「現状のまま」提供されます。開発者は、不具合やシステムの問題について一切の責任を負いません。</p><p><b>4. セキュリティ:</b> 非公式なソースからダウンロードされた場合、ウイルスや不正なコードについて開発者は責任を負いません。</p><p>アプリを使用することで、これらの条件に同意したことになります。</p>"
     }
 }
+
+CONFIG_PATH = os.path.join(BASE_DIR, "config.json")
+
 def load_config():
-    if os.path.exists(CONFIG_FILE):
+    
+    if os.path.exists(CONFIG_PATH):
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
+
                 for key, val in DEFAULT_CONFIG.items():
                     if key not in cfg: cfg[key] = val
                 return cfg
         except: pass
     return DEFAULT_CONFIG.copy()
+
+def save_config(cfg):
+  
+    with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2, ensure_ascii=False)
 
 def save_config(cfg):
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
